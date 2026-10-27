@@ -1,0 +1,15 @@
+envs/
+target/
+
+config.json
+
+test_data/snapshots/
+test_data/学生表*.json
+test_data/temp*
+*.tmp
+
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db

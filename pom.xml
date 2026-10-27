@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Jone —— 跨格式配置文件转换工具（JavaFX 桌面端）
+
+  构建约束：
+  - 技术栈：Java 25 + JavaFX 21.0.2 + Maven；
+  - 单元测试源码放在 tests/java，符合工作区目录规范；
+  - 第三方依赖仅 Gson、SnakeYAML、jSystemThemeDetector（JitPack），JUnit 仅 test 作用域，不进运行包。
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.jone</groupId>
+  <artifactId>jone</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+  <name>Jone</name>
+  <description>跨格式配置文件转换工具</description>
+
+  <properties>
+    <maven.compiler.release>25</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+    <javafx.version>21.0.2</javafx.version>
+    <gson.version>2.15.0</gson.version>
+    <snakeyaml.version>2.7</snakeyaml.version>
+    <systemtheme.version>3.6</systemtheme.version>
+    <junit.version>5.14.4</junit.version>
+  </properties>
+
+  <repositories>
+    <!-- jSystemThemeDetector 只发布在 JitPack 上，属于必需仓库 -->
+    <repository>
+      <id>jitpack.io</id>
+      <name>JitPack 仓库</name>
+      <url>https://jitpack.io</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <dependencies>
+    <!-- JavaFX：界面全部用代码构建，不引入 FXML -->
+    <dependency>
+      <groupId>org.openjfx</groupId>
+      <artifactId>javafx-controls</artifactId>
+      <version>${javafx.version}</version>
+    </dependency>
+
+    <!-- JSON 处理 -->
+    <dependency>
+      <groupId>com.google.code.gson</groupId>
+      <artifactId>gson</artifactId>
+      <version>${gson.version}</version>
+    </dependency>
+
+    <!-- YAML 处理 -->
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>${snakeyaml.version}</version>
+    </dependency>
+
+    <!-- 系统深浅色主题检测 -->
+    <dependency>
+      <groupId>com.github.Dansoftowner</groupId>
+      <artifactId>jSystemThemeDetector</artifactId>
+      <version>${systemtheme.version}</version>
+    </dependency>
+
+    <!--
+      jSystemThemeDetector 只传递 slf4j-api，缺少绑定会在启动时打印
+      “Failed to load class org.slf4j.impl.StaticLoggerBinder”。
+      引入官方空实现 slf4j-nop（仅 runtime，不参与编译）即可消除该提示。
+    -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+      <version>1.7.32</version>
+      <scope>runtime</scope>
+    </dependency>
+
+    <!-- 单元测试：仅 test 作用域，不会被打进运行包 -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>${junit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <!-- 源码与测试目录遵循工作区规范：src 放源码，tests/java 放单元测试 -->
+    <sourceDirectory>${project.basedir}/src</sourceDirectory>
+    <testSourceDirectory>${project.basedir}/tests/java</testSourceDirectory>
+    <!-- 界面全部用代码构建，没有需要打包的资源文件；这里显式声明以消除 Maven 的缺目录告警 -->
+    <resources>
+      <resource>
+        <directory>${project.basedir}/src</directory>
+        <excludes>
+          <exclude>**/*.java</exclude>
+        </excludes>
+      </resource>
+    </resources>
+    <finalName>Jone</finalName>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.14.1</version>
+        <configuration>
+          <release>25</release>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.5.6</version>
+        <configuration>
+          <!-- 派生 JVM 跑测试；中文输出依赖 env.ps1 里的 chcp 65001 与下面的编码参数 -->
+          <argLine>-Dfile.encoding=UTF-8 -Dstdout.encoding=UTF-8 -Dstderr.encoding=UTF-8</argLine>
+          <useModulePath>false</useModulePath>
+        </configuration>
+      </plugin>
+
+      <!-- 让 PowerShell 里直接执行 mvn javafx:run 即可启动 -->
+      <plugin>
+        <groupId>org.openjfx</groupId>
+        <artifactId>javafx-maven-plugin</artifactId>
+        <version>0.0.8</version>
+        <configuration>
+          <mainClass>com.jone.App</mainClass>
+          <options>
+            <option>-Dfile.encoding=UTF-8</option>
+            <option>-Dstdout.encoding=UTF-8</option>
+            <option>-Dstderr.encoding=UTF-8</option>
+            <!-- 允许 jSystemThemeDetector 通过 JNA 访问系统接口；javafx.graphics 需要加载本地库 -->
+            <option>--enable-native-access=ALL-UNNAMED,javafx.graphics</option>
+          </options>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Jone 项目专用 Maven 配置。
+
+  为什么放在这里而不是 Maven 安装目录：
+  宿主机用户级 settings.xml（C 盘）里存在 mirrorOf=* 的镜像规则，会把 JitPack 也一并劫持，
+  导致 jSystemThemeDetector 拉取失败；同时读取 C 盘配置也违背工作区隔离原则。
+  因此项目通过 .mvn/maven.config 指定本文件，完全替代用户级配置。
+
+  两个必须点：
+  1. localRepository 指向项目内 envs/m2repo，绝不写 C 盘用户仓库；
+  2. 中央仓库走阿里云镜像，但只镜像 central，JitPack 保持直连。
+  《TODO:若后续需要私有仓库，可在此追加 server 与 mirror 配置。》
+-->
+<settings xmlns="http://maven.apache.org/SETTINGS/1.2.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.2.0 https://maven.apache.org/xsd/settings-1.2.0.xsd">
+
+  <!-- 项目内本地仓库：所有依赖只落盘在工作区内部 -->
+  <localRepository>D:/DSHEAC_Exchanger/projs/Jone/envs/m2repo</localRepository>
+
+  <mirrors>
+    <!-- 只镜像中央仓库；JitPack 等其余仓库保持直连 -->
+    <mirror>
+      <id>aliyun-central</id>
+      <name>阿里云中央仓库镜像</name>
+      <url>https://maven.aliyun.com/repository/public</url>
+      <mirrorOf>central</mirrorOf>
+    </mirror>
+  </mirrors>
+
+  <profiles>
+    <profile>
+      <id>jone-encoding</id>
+      <properties>
+        <!-- 统一 UTF-8，保证中文注释与中文路径不乱码 -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <file.encoding>UTF-8</file.encoding>
+      </properties>
+    </profile>
+  </profiles>
+</settings>
